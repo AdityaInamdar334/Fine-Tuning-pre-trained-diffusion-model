@@ -53,7 +53,19 @@ python train.py
 * **Checkpoints**: Saved to `./checkpoints/ddpm_epoch_*.pth` at the end of each epoch.
 * **Progress Samples**: Generated grids are saved to `./samples/epoch_*.png` to verify the learning progression.
 
+
 ---
+
+## 📊 Training Progression Results
+
+Here is the quality progression of generated samples across different training epochs:
+
+| Epoch 1 (Initial noise/coarse outlines) | Epoch 5 (Recognizable article shapes) | Epoch 10 (Clear clothing articles) |
+|:---:|:---:|:---:|
+| ![Epoch 1](samples/epoch_1.png) | ![Epoch 5](samples/epoch_5.png) | ![Epoch 10](samples/epoch_10.png) |
+
+---
+
 
 ## 🎨 Generating Samples
 

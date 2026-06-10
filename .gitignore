@@ -154,6 +154,8 @@ cython_debug/
 # Project-specific ignored folders
 data/
 checkpoints/
-samples/
-*.png
 *.pth
+
+# Keep sample image results
+!samples/*.png
+
