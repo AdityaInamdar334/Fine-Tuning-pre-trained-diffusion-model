@@ -11,6 +11,22 @@ This repository contains a clean, from-scratch PyTorch implementation of a **Den
 
 ---
 
+## 🏗️ Architectural Improvements
+
+Compared to standard vanilla U-Net implementations, this model incorporates key improvements crucial for stable diffusion training:
+
+1. **Sinusoidal Timestep Embeddings**:
+   * Timesteps $t$ are projected into high-dimensional sinusoidal embeddings. This allows a single network to learn the shared denoising function across all diffusion timesteps ($t \in [0, 999]$).
+2. **Group Normalization (GroupNorm) over BatchNorm**:
+   * Standard Batch Normalization is highly dependent on batch size and can be unstable during diffusion training. Replacing it with **GroupNorm (8 groups)** ensures normalization per sample/group, stabilizing training statistics.
+3. **Conditioned Double Conv Blocks**:
+   * Every convolutional block projects the time embedding to match the channel dimension and adds it directly to the intermediate spatial feature maps (`h = h + time_projected`). This ensures the model dynamically conditions its output based on the noise level of the current step.
+4. **Dynamic Rescaling & Padding in Decoder**:
+   * Added dynamic padding calculation during decoding upsampling to prevent dimensions mismatches when dealing with arbitrary feature map resolutions.
+
+---
+
+
 ## 📁 Repository Structure
 
 * **`ddpm.py`**: Implementation of `DDPMScheduler` which controls adding noise to image samples and executing backward denoising steps.
