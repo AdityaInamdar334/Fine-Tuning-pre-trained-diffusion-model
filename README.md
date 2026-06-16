@@ -1,98 +1,282 @@
 # Denoising Diffusion Probabilistic Models (DDPM) on Fashion-MNIST
 
-This repository contains a clean, from-scratch PyTorch implementation of a **Denoising Diffusion Probabilistic Model (DDPM)**. It is designed to train and fine-tune on the **Fashion-MNIST** dataset, demonstrating the forward and reverse diffusion processes.
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-red)](https://pytorch.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🚀 Key Features
+A from-scratch implementation of a Denoising Diffusion Probabilistic Model (DDPM) in PyTorch for generative image modeling on the Fashion-MNIST dataset.
 
-* **Custom U-Net Architecture**: Built with skip connections, sinusoidal time-step embeddings, and Group Normalization (`unet.py`).
-* **DDPM Denoising Scheduler**: Custom variance schedule ($\beta_t$) implementation mapping the forward process (noising) and backward process (denoising step-by-step) (`ddpm.py`).
-* **Hardware Acceleration**: Automatic support for Apple Silicon GPU (`mps`), NVIDIA CUDA (`cuda`), and CPU.
-* **Epoch-wise Visual Tracking**: Generates grid samples after each epoch to visualize training progress.
-
----
-
-## 🏗️ Architectural Improvements
-
-Compared to standard vanilla U-Net implementations, this model incorporates key improvements crucial for stable diffusion training:
-
-1. **Sinusoidal Timestep Embeddings**:
-   * Timesteps $t$ are projected into high-dimensional sinusoidal embeddings. This allows a single network to learn the shared denoising function across all diffusion timesteps ($t \in [0, 999]$).
-2. **Group Normalization (GroupNorm) over BatchNorm**:
-   * Standard Batch Normalization is highly dependent on batch size and can be unstable during diffusion training. Replacing it with **GroupNorm (8 groups)** ensures normalization per sample/group, stabilizing training statistics.
-3. **Conditioned Double Conv Blocks**:
-   * Every convolutional block projects the time embedding to match the channel dimension and adds it directly to the intermediate spatial feature maps (`h = h + time_projected`). This ensures the model dynamically conditions its output based on the noise level of the current step.
-4. **Dynamic Rescaling & Padding in Decoder**:
-   * Added dynamic padding calculation during decoding upsampling to prevent dimensions mismatches when dealing with arbitrary feature map resolutions.
+This project implements the complete diffusion training and sampling pipeline, including a custom U-Net backbone, sinusoidal timestep conditioning, configurable noise schedules, and iterative denoising for image generation.
 
 ---
 
+## Overview
 
-## 📁 Repository Structure
+Diffusion models have emerged as one of the most effective approaches for generative modeling. Rather than generating images directly, DDPMs learn to reverse a gradual noise corruption process.
 
-* **`ddpm.py`**: Implementation of `DDPMScheduler` which controls adding noise to image samples and executing backward denoising steps.
-* **`unet.py`**: U-Net model with a sinusoidal timestep embedding module, downsampling blocks, bottleneck, and upsampling blocks (with skip connections).
-* **`train.py`**: Script to set up data loaders, initialize the optimizer and DDPM components, run training loops, and save checkpoint parameters alongside sample generation.
-* **`sample.py`**: Standalone command-line tool to load a saved checkpoint and generate arbitrary samples.
+This repository demonstrates:
 
----
+1. Forward diffusion through progressive noise injection
+2. Reverse diffusion through learned denoising
+3. Time-conditioned U-Net architecture
+4. Training and sampling workflows
+5. Visual monitoring of generation quality throughout training
 
-## 🛠️ Installation & Setup
-
-1. **Clone or Navigate to the Directory**:
-   ```bash
-   cd "Fine Tuning pre-trained-diffusion-model"
-   ```
-
-2. **Set up Virtual Environment**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**:
-   ```bash
-   pip install torch torchvision tqdm matplotlib
-   ```
+The implementation is designed for clarity, reproducibility, and educational exploration of modern diffusion architectures.
 
 ---
 
-## 🏋️ Training the Model
+## Project Highlights
 
-Start the training process using the following command:
+* Built a DDPM training pipeline entirely from scratch in PyTorch
+* Implemented a custom U-Net with timestep conditioning
+* Developed a configurable forward and reverse diffusion scheduler
+* Integrated hardware acceleration for Apple Silicon, CUDA, and CPU environments
+* Generated and tracked sample quality across training epochs
+* Applied diffusion modeling techniques used in modern image generation systems
+
+---
+
+## Model Architecture
+
+### U-Net Backbone
+
+The denoising network follows a U-Net architecture consisting of:
+
+* Encoder downsampling path
+* Bottleneck feature extraction layer
+* Decoder upsampling path
+* Skip connections for feature preservation
+
+The model predicts the noise component added to an image at a given diffusion timestep.
+
+### Timestep Conditioning
+
+A sinusoidal embedding module transforms diffusion timesteps into high-dimensional representations.
+
+This allows a single network to learn denoising behavior across all diffusion steps:
+
+```text
+t ∈ [0, T]
+```
+
+Each convolutional block receives timestep information through learned projections that are injected into intermediate feature maps.
+
+### Group Normalization
+
+Group Normalization is used instead of Batch Normalization to improve training stability.
+
+Benefits include:
+
+* Reduced sensitivity to batch size
+* More stable optimization
+* Improved diffusion training behavior
+
+### Conditional Feature Injection
+
+Time embeddings are projected into channel dimensions and added to feature maps throughout the network:
+
+```python
+h = h + time_embedding
+```
+
+This enables timestep-aware denoising at every stage of the architecture.
+
+### Decoder Rescaling
+
+Dynamic padding and resizing logic is incorporated into decoder blocks to avoid spatial dimension mismatches during upsampling.
+
+---
+
+## Repository Structure
+
+| File           | Description                                                     |
+| -------------- | --------------------------------------------------------------- |
+| `ddpm.py`      | DDPM scheduler implementation for forward and reverse diffusion |
+| `unet.py`      | U-Net architecture with sinusoidal timestep embeddings          |
+| `train.py`     | Training pipeline including optimization and checkpointing      |
+| `sample.py`    | Standalone image generation script                              |
+| `checkpoints/` | Saved model checkpoints                                         |
+| `samples/`     | Generated sample grids during training                          |
+
+---
+
+## Installation
+
+### Clone the Repository
+
+```bash
+git clone <repository-url>
+cd diffusion-fashion-mnist
+```
+
+### Create a Virtual Environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### Install Dependencies
+
+```bash
+pip install torch torchvision tqdm matplotlib
+```
+
+---
+
+## Training
+
+Train the diffusion model using:
 
 ```bash
 python train.py
 ```
 
-* **Dataset**: Automatically downloads the Fashion-MNIST dataset into a `./data` folder.
-* **Epochs**: Default is set to `10` epochs.
-* **Checkpoints**: Saved to `./checkpoints/ddpm_epoch_*.pth` at the end of each epoch.
-* **Progress Samples**: Generated grids are saved to `./samples/epoch_*.png` to verify the learning progression.
+### Training Configuration
 
+| Parameter       | Value         |
+| --------------- | ------------- |
+| Dataset         | Fashion-MNIST |
+| Default Epochs  | 10            |
+| Diffusion Steps | 1000          |
+| Framework       | PyTorch       |
 
----
+### Outputs
 
-## 📊 Training Progression Results
+Checkpoints:
 
-Here is the quality progression of generated samples across different training epochs:
-
-| Epoch 1 (Initial noise/coarse outlines) | Epoch 5 (Recognizable article shapes) | Epoch 10 (Clear clothing articles) |
-|:---:|:---:|:---:|
-| ![Epoch 1](samples/epoch_1.png) | ![Epoch 5](samples/epoch_5.png) | ![Epoch 10](samples/epoch_10.png) |
-
----
-
-
-## 🎨 Generating Samples
-
-You can generate samples using a trained checkpoint (e.g., from epoch 10) with the standalone script:
-
-```bash
-python sample.py --checkpoint checkpoints/ddpm_epoch_10.pth --num_samples 16 --output generated_samples.png
+```text
+checkpoints/
+├── ddpm_epoch_1.pth
+├── ddpm_epoch_2.pth
+└── ...
 ```
 
-### Options:
-* `--checkpoint`: Path to the trained `.pth` model checkpoint (default: `checkpoints/ddpm_epoch_10.pth`).
-* `--num_samples`: Total number of samples to generate in the output grid (default: `16`).
-* `--num_timesteps`: Total number of backward diffusion steps (default: `1000`).
-* `--output`: Filepath to save the generated grid image (default: `generated_samples.png`).
+Generated samples:
+
+```text
+samples/
+├── epoch_1.png
+├── epoch_2.png
+└── ...
+```
+
+---
+
+## Sampling
+
+Generate images using a trained checkpoint:
+
+```bash
+python sample.py \
+  --checkpoint checkpoints/ddpm_epoch_10.pth \
+  --num_samples 16 \
+  --output generated_samples.png
+```
+
+### Available Arguments
+
+| Argument          | Description                      |
+| ----------------- | -------------------------------- |
+| `--checkpoint`    | Path to trained model checkpoint |
+| `--num_samples`   | Number of generated images       |
+| `--num_timesteps` | Reverse diffusion steps          |
+| `--output`        | Output image filename            |
+
+---
+
+## Training Results
+
+The quality of generated samples improves progressively as the model learns the reverse diffusion process.
+
+| Early Training                            | Mid Training                     | Final Training                          |
+| ----------------------------------------- | -------------------------------- | --------------------------------------- |
+| Initial noise patterns and rough outlines | Recognizable clothing structures | Clear Fashion-MNIST category generation |
+
+Add generated sample grids below:
+
+```markdown
+![Epoch 1](samples/epoch_1.png)
+![Epoch 5](samples/epoch_5.png)
+![Epoch 10](samples/epoch_10.png)
+```
+
+---
+
+## Technical Components
+
+### Diffusion Scheduler
+
+The scheduler implements:
+
+* Linear beta scheduling
+* Forward noise addition
+* Reverse denoising updates
+* Variance computation
+* Sampling trajectory generation
+
+### Loss Function
+
+Training minimizes the mean squared error between:
+
+* True injected noise
+* Predicted noise from the U-Net
+
+```math
+L = ||\epsilon - \epsilon_\theta(x_t, t)||^2
+```
+
+### Hardware Support
+
+Automatic device detection:
+
+```python
+mps    # Apple Silicon
+cuda   # NVIDIA GPU
+cpu    # CPU fallback
+```
+
+---
+
+## Future Improvements
+
+Potential extensions include:
+
+* DDIM sampling
+* Class-conditioned diffusion
+* CIFAR-10 and CelebA support
+* Attention-enhanced U-Net blocks
+* Exponential Moving Average (EMA)
+* Classifier-free guidance
+* Mixed precision training
+* Latent diffusion architectures
+
+---
+
+## Technology Stack
+
+* Python
+* PyTorch
+* Diffusion Models (DDPM)
+* U-Net
+* Fashion-MNIST
+* Computer Vision
+* Generative AI
+
+---
+
+## License
+
+This project is released under the MIT License.
+
+See the `LICENSE` file for additional information.
+
+---
+
+## References
+
+* Denoising Diffusion Probabilistic Models (Ho et al., 2020)
+* Improved Denoising Diffusion Probabilistic Models (Nichol & Dhariwal, 2021)
+* PyTorch Deep Learning Framework
+* Fashion-MNIST Dataset
