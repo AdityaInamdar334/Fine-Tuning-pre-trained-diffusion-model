@@ -106,7 +106,7 @@ Dynamic padding and resizing logic is incorporated into decoder blocks to avoid 
 ### Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/AdityaInamdar334/Fine-Tuning-pre-trained-diffusion-model
 cd diffusion-fashion-mnist
 ```
 
